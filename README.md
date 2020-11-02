@@ -1,1 +1,3 @@
-# Data-Extraction-Transformation-Command-line-Tool
+# frelabpy
+This is our project for FRE Lab Fall 2020
+
