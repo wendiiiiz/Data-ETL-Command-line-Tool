@@ -1,0 +1,182 @@
+{
+    "feature_args": {
+        "-input": {
+            "dest": "input_path",
+            "help": "Input data path, required in both Extraction and Transformation",
+            "required": "True"
+        },
+        "-output": {
+            "dest": "output_path",
+            "help": "Output data path, required in both Extraction and Transformation",
+            "required": "True"
+        },
+        "-mapping": {
+            "dest": "mapping_path",
+            "help": "Mapping data path, required only in Extraction",
+            "required": "True"
+        },
+        "-run_date": {
+            "dest": "run_date",
+            "help": "As-of date of running Extraction workflow, used in both Extraction and Transformation",
+            "required": "True"
+        },
+        "-description": {
+            "dest": "description",
+            "help": "Process description, used in both Extraction and Transformation",
+            "required": "True"
+        },
+         "-prop_date": {
+            "dest": "prop_date",
+            "help": "As-of date of running Transformation workflow, used only in Transformation",
+            "required": "True"
+        }
+    },
+    "extraction": {
+        "description": "Wendi Zhang",
+        "input": {
+            "read": {
+                "file_type": "csv",
+                "separator": "|",
+                "apply_dtype": {
+                    "DEPT_CODE": "str",
+                    "EMP_NAME": "str",
+                    "EMP_CODE": "int",
+                    "SALARY": "float",
+                    "EMP_TYPE": "str"
+                }
+            },
+            "plugin": null
+        },
+        "mapping": {
+            "read": {
+                "file_type": "csv",
+                "separator": ",",
+                "apply_dtype": {
+                    "CODE": "str",
+                    "DEPT_NAME": "str"
+                }
+            },
+            "left_on": [
+                "DEPT_CODE"
+            ],
+            "right_on": [
+                "CODE"
+            ],
+            "plugin": null
+        },
+        "assign": {
+            "col_const": {
+                "ASSIGN_CURRENCY": "USD",
+                "ASSIGN_ACCOUNT": "WZHANG",
+                "ASSIGN_COMMENTS": ""
+            },
+            "col_var": {
+                "ASSIGN_DATE": "run_date",
+                "ASSIGN_DESCRIPTION": "description"
+            },
+            "plugin": null
+        },
+        "output": {
+            "rearrange": {
+                "col_rename": {
+                    "ASSIGN_DATE": "RUN_DATE",
+                    "ASSIGN_DESCRIPTION": "DESCRIPTION",
+                    "SALARY": "AMOUNT",
+                    "ASSIGN_CURRENCY": "CURRENCY",
+                    "ASSIGN_ACCOUNT": "ACCOUNT",
+                    "EMP_CODE": "EXT_ACCOUNT",
+                    "DEPT_NAME": "MAP_ACCOUNT",
+                    "EMP_TYPE": "TYPE",
+                    "ASSIGN_COMMENTS": "COMMENTS"
+                },
+                "col_reorder": [
+                    "RUN_DATE",
+                    "DESCRIPTION",
+                    "AMOUNT",
+                    "CURRENCY",
+                    "ACCOUNT",
+                    "EXT_ACCOUNT",
+                    "MAP_ACCOUNT",
+                    "TYPE",
+                    "COMMENTS"
+                ],
+                "plugin": null
+            },
+            "write": {
+                "file_type": "csv",
+                "separator": "|"
+            },
+            "plugin": "apps.opendata.src.plugin_util.add_datetime_into_comments_plugin"
+        }
+    },
+    "transformation": {
+        "description": "Wendi Zhang",
+        "input": {
+            "read": {
+                "file_type": "csv",
+                "separator": "|",
+                "apply_dtype": {
+                    "RUN_DATE": "str",
+                    "DESCRIPTION": "str",
+                    "AMOUNT": "float",
+                    "CURRENCY": "str",
+                    "ACCOUNT": "str",
+                    "EXT_ACCOUNT": "str",
+                    "MAP_ACCOUNT": "str",
+                    "TYPE": "str",
+                    "COMMENTS": "datetime.date"
+                }
+            },
+            "plugin": null
+        },
+        "aggregate": {
+            "group_by": [
+                "MAP_ACCOUNT",
+                "TYPE"
+            ],
+            "agg": {
+                "AMOUNT": "sum"
+            }
+        },
+        "assign": {
+            "col_const": {
+                "PROCESS_TYPE": "TRFM",
+                "POD_CODE": "WZHANG",
+                "GENERIC_COMMENTS": " "
+            },
+            "col_var": {
+                "END_DATE": "prop_date"
+            },
+            "plugin": null
+        },
+        "dupl": {
+            "col_const": {
+                "GENERIC_COMMENTS": "Duplicated"
+            }
+        },
+        "output": {
+            "rearrange": {
+                "col_rename": {
+                    "AMOUNT": "Amount_by_Department_Employment_Type",
+                    "MAP_ACCOUNT": "Department",
+                    "TYPE": "Employment_Type",
+                    "PROCESS_TYPE": "Process_Type",
+                    "POD_CODE": "Pod_Code",
+                    "GENERIC_COMMENTS": "Generic_Comments",
+                    "END_DATE": "End_Date"
+                },
+                "col_reorder": [
+                    "Department", "Employment_Type", "Amount_by_Department_Employment_Type",
+                "Process_Type", "Pod_Code", "Generic_Comments", "End_Date"]
+                ,
+                "plugin": null
+            },
+            "write": {
+                "file_type": "csv",
+                "separator": "|"
+            },
+            "plugin": null
+        }
+    }
+}
+
